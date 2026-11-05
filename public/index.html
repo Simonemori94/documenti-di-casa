@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1f3a5f">
-<title>Documenti di casa</title>
+<title>Segretaria Personale</title>
+<link rel="manifest" href="/api/manifest">
+<link rel="icon" href="/api/icon.svg" type="image/svg+xml">
 <style>
   :root { --bg:#f4f6f9; --card:#fff; --ink:#1b2430; --mute:#6b7787; --brand:#1f3a5f; --warn:#c0392b; --ok:#2e7d32; --line:#e2e7ee; }
   @media (prefers-color-scheme: dark) { :root { --bg:#12161c; --card:#1b212a; --ink:#e8edf3; --mute:#93a0b0; --brand:#5b8fd6; --line:#2a323d; } }
@@ -21,7 +23,7 @@
   nav { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--card); border-top:1px solid var(--line); }
   nav button { flex:1; padding:14px 4px; border:0; background:none; color:var(--mute); font-size:14px; }
   nav button.on { color:var(--brand); font-weight:700; border-top:3px solid var(--brand); }
-  input[type=text], input[type=password] { width:100%; padding:12px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:16px; }
+  input[type=text], input[type=password], input[type=time] { width:100%; padding:12px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:16px; }
   .btn { background:var(--brand); color:#fff; border:0; border-radius:10px; padding:12px 16px; font-size:15px; }
   .btn.sec { background:var(--line); color:var(--ink); }
   .msg { padding:10px 12px; border-radius:12px; margin-bottom:8px; white-space:pre-wrap; line-height:1.4; }
@@ -29,19 +31,40 @@
   .hidden { display:none; } a { color:var(--brand); }
   #login { max-width:360px; margin:80px auto; padding:16px; }
   .bar { display:flex; gap:8px; margin-bottom:12px; }
+  /* ---- schermata Oggi ---- */
+  #hello { margin:4px 0 0; font-size:26px; }
+  h3.sec { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--mute); margin:20px 2px 8px; }
+  .day { margin:10px 2px 6px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+  .acts { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; align-items:center; }
+  a.btn { text-decoration:none; display:inline-block; }
+  .btn.sm { padding:8px 12px; font-size:13px; }
+  .out { margin-top:8px; white-space:pre-line; font-size:14px; }
+  .todo { align-items:center; }
+  .todo label { display:flex; gap:10px; align-items:center; flex:1; min-width:0; }
+  .todo span { overflow-wrap:anywhere; }
+  .todo.done span { text-decoration:line-through; color:var(--mute); }
+  .todo input[type=checkbox] { width:20px; height:20px; accent-color:var(--brand); flex:none; }
+  .x { background:none; border:0; color:var(--mute); font-size:24px; line-height:1; padding:0 6px; }
+  .field { margin-bottom:10px; }
+  .field > label { display:block; font-size:12px; color:var(--mute); margin-bottom:4px; }
+  .fieldrow { display:flex; gap:8px; align-items:flex-end; }
+  .fieldrow > .field { flex:1; min-width:0; margin-bottom:0; }
+  details > summary { cursor:pointer; padding:2px 0; }
+  details ol { margin:8px 0 0; padding-left:20px; line-height:1.5; }
+  .links { display:flex; flex-wrap:wrap; gap:8px; }
 </style>
 </head>
 <body>
 <div id="login" class="hidden">
-  <h2>🏠 Documenti di casa</h2>
-  <p class="mute">Inserisci la password dell'archivio.</p>
+  <h2>🗂️ Segretaria Personale</h2>
+  <p class="mute">Inserisci la tua password.</p>
   <input type="password" id="pw" placeholder="Password" autocomplete="current-password">
   <p><button class="btn" id="loginBtn" style="width:100%">Entra</button></p>
   <p id="loginErr" class="late"></p>
 </div>
 
 <div id="app" class="hidden">
-  <header>🏠 Documenti di casa <span><button id="scanBtn">📷 Scansiona</button> <button id="uploadBtn">＋ Carica</button></span></header>
+  <header>🗂️ Segretaria <span><button id="scanBtn">📷 Scansiona</button> <button id="uploadBtn">＋ Carica</button></span></header>
   <input type="file" id="fileIn" class="hidden" multiple accept=".pdf,image/*,.txt,.md">
   <input type="file" id="camIn" class="hidden" accept="image/*" capture="environment">
   <div id="scanPanel" class="hidden" style="position:fixed;inset:0;background:var(--bg);z-index:10;padding:16px;overflow:auto">
@@ -52,7 +75,64 @@
     <div class="bar"><button class="btn" id="saveScan" style="flex:1">Salva documento</button><button class="btn sec" id="cancelScan">Annulla</button></div>
   </div>
   <main>
-    <section id="tab-deadlines"></section>
+    <section id="tab-today">
+      <h2 id="hello"></h2>
+      <div class="mute" id="dateLine"></div>
+
+      <h3 class="sec">Agenda</h3>
+      <div id="agenda"><p class="mute">Carico l'agenda…</p></div>
+
+      <h3 class="sec">Dall'archivio</h3>
+      <div id="soon"></div>
+
+      <h3 class="sec">Da fare</h3>
+      <div class="bar"><input type="text" id="todoIn" placeholder="Aggiungi una cosa da fare" maxlength="200" autocomplete="off"><button class="btn" id="todoAdd">Aggiungi</button></div>
+      <div id="todos"></div>
+
+      <h3 class="sec">Spostamenti</h3>
+      <div class="card">
+        <div class="fieldrow" style="margin-bottom:12px">
+          <div class="field"><label for="homeIn">Parti da</label><input type="text" id="homeIn" placeholder="Il tuo indirizzo di partenza" maxlength="200" autocomplete="off"></div>
+          <button class="btn sec sm" id="homeSave">Salva</button>
+        </div>
+        <div class="field"><label for="destIn">Destinazione</label><input type="text" id="destIn" placeholder="Via, città o nome del posto" maxlength="200" autocomplete="off"></div>
+        <div class="fieldrow">
+          <div class="field"><label for="arrIn">Devi arrivare alle</label><input type="time" id="arrIn"></div>
+          <button class="btn sm" id="tripGo">Calcola</button>
+        </div>
+        <div class="out" id="tripOut" aria-live="polite"></div>
+        <div class="acts"><a class="btn sec sm hidden" id="tripWaze" href="#" target="_blank" rel="noopener">🧭 Naviga con Waze</a></div>
+        <p class="mute" style="margin:10px 0 0">Stima della guida in auto, senza traffico in tempo reale, più 10 minuti di margine. Se non conosci la via basta il comune. Waze mostra il tempo aggiornato.</p>
+      </div>
+
+      <h3 class="sec">Strumenti</h3>
+      <div class="links">
+        <a class="btn sec sm" href="https://mail.google.com/" target="_blank" rel="noopener">✉️ Gmail</a>
+        <a class="btn sec sm" href="https://calendar.google.com/" target="_blank" rel="noopener">📆 Calendar</a>
+        <a class="btn sec sm" href="https://www.strava.com/dashboard" target="_blank" rel="noopener">🏃 Strava</a>
+        <a class="btn sec sm" href="https://www.waze.com/live-map" target="_blank" rel="noopener">🧭 Waze</a>
+      </div>
+      <p class="mute">Le email da guardare arrivano nel riassunto del mattino.</p>
+
+      <h3 class="sec">Impostazioni</h3>
+      <details class="card">
+        <summary><b>Agenda e account</b></summary>
+        <p class="mute" id="calState"></p>
+        <div class="field"><label for="icsIn">Link segreto di Google Calendar</label><input type="text" id="icsIn" placeholder="https://calendar.google.com/calendar/ical/…" autocomplete="off"></div>
+        <div class="acts" style="margin-top:0"><button class="btn sm" id="icsSave">Collega agenda</button><button class="btn sec sm" id="icsOff">Scollega</button></div>
+        <details style="margin-top:12px"><summary class="mute">Dove trovo il link?</summary>
+          <ol class="mute">
+            <li>Da telefono apri calendar.google.com nel browser e scegli “Sito desktop” dal menu ⋮.</li>
+            <li>Tocca l'ingranaggio → Impostazioni.</li>
+            <li>A sinistra, sotto “Impostazioni dei miei calendari”, scegli il tuo calendario.</li>
+            <li>Scorri fino a “Integra il calendario” e copia “Indirizzo segreto in formato iCal”.</li>
+            <li>Incollalo qui sopra. Chi ha il link può leggere l'agenda: non condividerlo.</li>
+          </ol>
+        </details>
+        <div class="acts" style="margin-top:14px"><button class="btn sec sm" id="logout">Esci dall'app</button></div>
+      </details>
+    </section>
+    <section id="tab-deadlines" class="hidden"></section>
     <section id="tab-docs" class="hidden">
       <div class="bar"><input type="text" id="q" placeholder="Cerca nei documenti…"></div>
       <div id="docList"></div>
@@ -63,7 +143,8 @@
     </section>
   </main>
   <nav>
-    <button data-tab="deadlines" class="on">📅 Scadenze</button>
+    <button data-tab="today" class="on">🏠 Oggi</button>
+    <button data-tab="deadlines">📅 Scadenze</button>
     <button data-tab="docs">📄 Documenti</button>
     <button data-tab="ask">💬 Assistente</button>
   </nav>
@@ -84,7 +165,7 @@ async function api(path, opts = {}) {
 }
 
 function showLogin() { $("#app").classList.add("hidden"); $("#login").classList.remove("hidden"); }
-function showApp() { $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); loadDeadlines(); }
+function showApp() { $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); go("today"); }
 
 $("#loginBtn").onclick = async () => {
   pw = $("#pw").value;
@@ -92,17 +173,21 @@ $("#loginBtn").onclick = async () => {
   catch { $("#loginErr").textContent = "Password errata."; }
 };
 
-document.querySelectorAll("nav button").forEach((b) => b.onclick = () => {
-  document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x === b));
-  ["deadlines", "docs", "ask"].forEach((t) => $("#tab-" + t).classList.toggle("hidden", t !== b.dataset.tab));
-  if (b.dataset.tab === "deadlines") loadDeadlines();
-  if (b.dataset.tab === "docs") loadDocs();
-});
+function go(tab) {
+  document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x.dataset.tab === tab));
+  ["today", "deadlines", "docs", "ask"].forEach((n) => $("#tab-" + n).classList.toggle("hidden", n !== tab));
+  if (tab === "today") loadToday();
+  if (tab === "deadlines") loadDeadlines();
+  if (tab === "docs") loadDocs();
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll("nav button").forEach((b) => b.onclick = () => go(b.dataset.tab));
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 async function loadDeadlines() {
   const list = await api("/api/deadlines");
+  renderSoon(list);
   const today = new Date(); today.setHours(0, 0, 0, 0);
   if (!list.length) { $("#tab-deadlines").innerHTML = '<p class="mute">Nessuna scadenza. Carica un documento per iniziare.</p>'; return; }
   $("#tab-deadlines").innerHTML = list.map((d) => {
@@ -220,6 +305,137 @@ async function ask() {
 }
 $("#askBtn").onclick = ask;
 $("#question").onkeydown = (e) => { if (e.key === "Enter") ask(); };
+
+// ---- Schermata Oggi: agenda, scadenze, cose da fare, spostamenti ----
+const ROME = "Europe/Rome", MARGIN = 10;
+const fmtT = (iso) => new Date(iso).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit", timeZone: ROME });
+const wazeUrl = (q) => "https://waze.com/ul?q=" + encodeURIComponent(q) + "&navigate=yes";
+const JSON_H = { "content-type": "application/json" };
+let lastToday = 0, agendaEvents = [];
+
+function loadToday() {
+  lastToday = Date.now();
+  const h = +new Date().toLocaleString("en-GB", { hour: "2-digit", hour12: false, timeZone: ROME });
+  $("#hello").textContent = h < 12 ? "Buongiorno" : h < 18 ? "Buon pomeriggio" : "Buonasera";
+  $("#dateLine").textContent = new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long", timeZone: ROME });
+  loadAgenda(); loadTodos(); loadDeadlines(); loadSettings();
+}
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && pw && !$("#tab-today").classList.contains("hidden") && Date.now() - lastToday > 60000) loadToday();
+});
+const quiet = (e) => { if (e.message !== "401") console.error(e); };
+
+function evCard(e) {
+  const i = agendaEvents.push(e) - 1;
+  const when = e.allDay ? "Tutto il giorno" : fmtT(e.start) + "–" + fmtT(e.end);
+  const loc = e.location ? `<div class="mute">📍 ${esc(e.location)}</div>` : "";
+  let acts = "";
+  if (e.location) {
+    acts = `<div class="acts"><a class="btn sec sm" href="${wazeUrl(e.location)}" target="_blank" rel="noopener">🧭 Waze</a>` +
+      (!e.allDay && new Date(e.start) > new Date() ? `<button class="btn sec sm" data-trip="${i}">⏰ Quando partire</button>` : "") +
+      `</div><div class="out mute" id="tripout${i}" aria-live="polite"></div>`;
+  }
+  return `<div class="card"><div class="row"><b>${esc(e.title)}</b><span class="badge">${when}</span></div>${loc}${acts}</div>`;
+}
+async function loadAgenda() {
+  const box = $("#agenda");
+  try {
+    const d = await api("/api/today");
+    if (!d.configured) { box.innerHTML = '<div class="card"><b>Agenda non collegata</b><div class="mute">In fondo, in “Impostazioni”, incolla il link segreto di Google Calendar.</div></div>'; return; }
+    if (d.error) { box.innerHTML = `<div class="card late">${esc(d.error)}</div>`; return; }
+    agendaEvents = [];
+    box.innerHTML = [["Oggi", d.today], ["Domani", d.tomorrow]].map(([label, list]) =>
+      `<div class="mute day">${label}</div>` + (list.length ? list.map(evCard).join("") : '<div class="card mute">Nessun impegno.</div>')).join("");
+    box.querySelectorAll("[data-trip]").forEach((b) => b.onclick = () => {
+      const e = agendaEvents[+b.dataset.trip];
+      runTrip(e.location, new Date(e.start), $("#tripout" + b.dataset.trip));
+    });
+  } catch (e) { quiet(e); if (e.message !== "401") box.innerHTML = '<div class="card late">Non riesco a leggere l\'agenda.</div>'; }
+}
+
+function renderSoon(list) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const items = list.map((d) => ({ d, days: Math.round((new Date(d.date) - today) / 86400000) })).filter((x) => x.days <= 30).slice(0, 3);
+  $("#soon").innerHTML = items.length ? items.map(({ d, days }) => {
+    const cls = days < 0 ? "late" : days <= 7 ? "soon" : "fine";
+    const label = days < 0 ? `scaduta da ${-days} gg` : days === 0 ? "oggi" : `tra ${days} gg`;
+    return `<div class="card"><div class="row"><div><b>${esc(d.description)}</b><div class="mute">${esc(d.title)}</div></div><div style="text-align:right"><div class="${cls}">${label}</div></div></div></div>`;
+  }).join("") + '<p style="margin:0"><a href="#" id="allDeadlines">Tutte le scadenze</a></p>' : '<div class="card mute">Nessuna scadenza nei prossimi 30 giorni.</div>';
+  const a = $("#allDeadlines"); if (a) a.onclick = (e) => { e.preventDefault(); go("deadlines"); };
+}
+
+function renderTodos(list) {
+  $("#todos").innerHTML = list.length ? list.map((t) =>
+    `<div class="card row todo ${t.done ? "done" : ""}"><label><input type="checkbox" data-t="${t.id}" ${t.done ? "checked" : ""}><span>${esc(t.title)}</span></label><button class="x" data-x="${t.id}" aria-label="Elimina">×</button></div>`).join("")
+    : '<div class="card mute">Niente da fare. Aggiungi la prima cosa qui sopra.</div>';
+  document.querySelectorAll("[data-t]").forEach((c) => c.onchange = async () => {
+    try { renderTodos(await api("/api/todos/" + c.dataset.t, { method: "PATCH", headers: JSON_H, body: JSON.stringify({ done: c.checked }) })); } catch (e) { quiet(e); }
+  });
+  document.querySelectorAll("[data-x]").forEach((b) => b.onclick = async () => {
+    try { renderTodos(await api("/api/todos/" + b.dataset.x, { method: "DELETE" })); } catch (e) { quiet(e); }
+  });
+}
+async function loadTodos() { try { renderTodos(await api("/api/todos")); } catch (e) { quiet(e); } }
+async function addTodo() {
+  const title = $("#todoIn").value.trim(); if (!title) return;
+  $("#todoIn").value = "";
+  try { renderTodos(await api("/api/todos", { method: "POST", headers: JSON_H, body: JSON.stringify({ title }) })); }
+  catch (e) { $("#todoIn").value = title; if (e.message !== "401") alert(e.message); }
+}
+$("#todoAdd").onclick = addTodo;
+$("#todoIn").onkeydown = (e) => { if (e.key === "Enter") addTodo(); };
+
+async function runTrip(dest, arrival, out, origin) {
+  out.textContent = "Calcolo…";
+  try {
+    const r = await api("/api/trip", { method: "POST", headers: JSON_H, body: JSON.stringify({ dest, origin }) });
+    if (r.unknown) { out.textContent = "Non riesco a individuare il luogo" + (r.reason ? ": " + r.reason : "."); return; }
+    const leave = new Date(arrival.getTime() - (r.minutes + MARGIN) * 60000);
+    const dayOf = (d) => d.toLocaleDateString("it-IT", { timeZone: ROME });
+    const when = dayOf(leave) === dayOf(new Date()) ? "" : leave.toLocaleDateString("it-IT", { day: "numeric", month: "short", timeZone: ROME }) + " ";
+    let txt = "Parti alle " + when + fmtT(leave) + " · circa " + r.minutes + " min di guida" + (r.km ? " (" + Math.round(r.km) + " km)" : "") + " + " + MARGIN + " di margine";
+    if (leave < new Date()) txt += " · dovresti essere già partito";
+    if (r.from || r.to) txt += "\nInteso come: " + (r.from || "") + " → " + (r.to || "");
+    out.textContent = txt;
+  } catch (e) { if (e.message !== "401") out.textContent = e.message || "Stima non riuscita. Riprova."; }
+}
+$("#destIn").oninput = () => {
+  const v = $("#destIn").value.trim();
+  $("#tripWaze").classList.toggle("hidden", !v);
+  if (v) $("#tripWaze").href = wazeUrl(v);
+};
+$("#tripGo").onclick = () => {
+  const dest = $("#destIn").value.trim(), at = $("#arrIn").value;
+  if (!dest) { $("#tripOut").textContent = "Scrivi la destinazione."; return; }
+  if (!at) { $("#tripOut").textContent = "Indica a che ora devi arrivare."; return; }
+  const [hh, mm] = at.split(":").map(Number), arrival = new Date();
+  arrival.setHours(hh, mm, 0, 0);
+  if (arrival <= new Date()) arrival.setDate(arrival.getDate() + 1);
+  runTrip(dest, arrival, $("#tripOut"), $("#homeIn").value.trim());
+};
+
+async function loadSettings() {
+  try {
+    const s = await api("/api/settings");
+    if (document.activeElement !== $("#homeIn")) $("#homeIn").value = s.home || "";
+    $("#calState").textContent = s.calendar ? "Agenda collegata ✓" : "Agenda non collegata.";
+  } catch (e) { quiet(e); }
+}
+async function putSettings(body) {
+  await api("/api/settings", { method: "PUT", headers: JSON_H, body: JSON.stringify(body) });
+  await loadSettings();
+}
+$("#homeSave").onclick = async () => {
+  try { await putSettings({ home: $("#homeIn").value.trim() }); $("#tripOut").textContent = "Partenza salvata."; } catch (e) { if (e.message !== "401") $("#tripOut").textContent = e.message; }
+};
+$("#icsSave").onclick = async () => {
+  const v = $("#icsIn").value.trim(); if (!v) return;
+  try { await putSettings({ ics_url: v }); $("#icsIn").value = ""; loadAgenda(); } catch (e) { if (e.message !== "401") $("#calState").textContent = e.message; }
+};
+$("#icsOff").onclick = async () => {
+  try { await putSettings({ ics_url: "" }); loadAgenda(); } catch (e) { quiet(e); }
+};
+$("#logout").onclick = () => { localStorage.removeItem("dc_pw"); location.reload(); };
 
 if (pw) api("/api/ping").then(showApp).catch(showLogin); else showLogin();
 </script>
