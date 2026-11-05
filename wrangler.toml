@@ -10,7 +10,7 @@ run_worker_first = ["/api/*"]
 [[d1_databases]]
 binding = "DB"
 database_name = "documenti-db"
-database_id = "INCOLLA_QUI_L_ID"
+database_id = "d6c9c141-9240-4e16-a952-0b22d63ab8e4"
 
 [[r2_buckets]]
 binding = "FILES"
