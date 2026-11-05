@@ -1,5 +1,5 @@
 // Documenti di casa — Cloudflare Worker (API). Il frontend è in public/index.html
-const MODEL = "claude-sonnet-5-5";
+const MODEL = "gemini-2.5-flash"; // modello gratuito di Google; se un giorno non risponde, cambia solo questo nome
 const CATEGORIES = ["Assicurazioni", "Contratti e utenze", "Auto", "Bollette", "Documenti personali", "Salute", "Fisco", "Casa", "Altro"];
 
 const json = (data, status = 200) =>
@@ -15,24 +15,26 @@ function toBase64(buf) {
   return btoa(bin);
 }
 
+// Chiamata a Gemini. "content" è una stringa oppure una lista di parti (testo / file inline).
 async function claude(env, content, system, maxTokens = 4000) {
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: maxTokens,
-      system,
-      messages: [{ role: "user", content }],
-    }),
-  });
-  if (!r.ok) throw new Error("Errore Claude API: " + r.status + " " + (await r.text()));
+  const parts = typeof content === "string" ? [{ text: content }] : content;
+  const r = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts }],
+        generationConfig: { maxOutputTokens: maxTokens },
+      }),
+    }
+  );
+  if (!r.ok) throw new Error("Errore Gemini API: " + r.status + " " + (await r.text()));
   const data = await r.json();
-  return data.content.map((b) => b.text || "").join("");
+  const out = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
+  if (!out) throw new Error("Risposta vuota da Gemini");
+  return out;
 }
 
 function authorized(request, env) {
@@ -54,19 +56,14 @@ async function analyze(env, file, buf) {
 
   const mime = file.type || "application/octet-stream";
   let blocks;
-  if (mime === "application/pdf") {
+  if (mime === "application/pdf" || mime.startsWith("image/")) {
     blocks = [
-      { type: "document", source: { type: "base64", media_type: mime, data: toBase64(buf) } },
-      { type: "text", text: instruction },
-    ];
-  } else if (mime.startsWith("image/")) {
-    blocks = [
-      { type: "image", source: { type: "base64", media_type: mime, data: toBase64(buf) } },
-      { type: "text", text: instruction },
+      { inline_data: { mime_type: mime, data: toBase64(buf) } },
+      { text: instruction },
     ];
   } else {
     const text = new TextDecoder().decode(buf).slice(0, 60000);
-    blocks = [{ type: "text", text: instruction + "\n\nDOCUMENTO:\n" + text }];
+    blocks = [{ text: instruction + "\n\nDOCUMENTO:\n" + text }];
   }
 
   const raw = await claude(env, blocks, system, 6000);

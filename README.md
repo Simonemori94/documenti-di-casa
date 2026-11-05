@@ -33,7 +33,7 @@ Gira su Cloudflare (Worker + D1 + R2). Ogni modifica salvata su GitHub viene pub
 
 ### 5. Chiave e password (segrete, NON su GitHub)
 Worker `documenti-di-casa` → **Settings → Variables and Secrets → Add**, tipo **Secret**:
-- `ANTHROPIC_API_KEY` — la chiave da console.anthropic.com
+- `GEMINI_API_KEY` — chiave gratuita da aistudio.google.com/apikey (Create API key)
 - `APP_PASSWORD` — la password per entrare nell'app (lunga!)
 
 Poi **Deploy** (o fai un piccolo commit) per applicarle.
@@ -54,5 +54,5 @@ Cosa si modifica dove:
 
 ## Problemi comuni
 - **"Non autorizzato"**: password sbagliata, o il secret non è stato applicato con un nuovo deploy.
-- **Documenti senza scadenze / "Analisi non riuscita"**: controlla `ANTHROPIC_API_KEY` e il credito sul tuo account Anthropic.
+- **Documenti senza scadenze / "Analisi non riuscita"**: controlla `GEMINI_API_KEY` (e di aver rifatto il deploy dopo averla inserita). Se compare un errore 429, hai finito le richieste gratuite del giorno: riprova più tardi.
 - **Build fallita**: Deployments → apri l'ultima build → leggi l'errore (di solito un ID database non incollato).
